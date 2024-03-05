@@ -1,0 +1,13 @@
+FROM apache/airflow:latest
+USER root
+RUN apt-get update && \
+    apt-get -y install git && \
+    apt-get install -y unzip && \
+    apt-get install -y ffmpeg && \
+    apt-get clean
+USER airflow
+RUN pip install apache-beam
+RUN pip install matplotlib
+RUN pip install pandas
+RUN pip install geopandas
+RUN pip install connexion[swagger-ui]
