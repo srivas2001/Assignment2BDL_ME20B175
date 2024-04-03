@@ -50,16 +50,16 @@ def csv_df(csv_file):
     df[all_analyse]=df[all_analyse].apply(pd.to_numeric,errors='coerce') #Convert to numeric and coerce errors
     df.dropna(how='any') #Drop all nan values
     for index,row in df.iterrows():
-        lat=row['LATITUDE']
+        lat=row['LATITUDE'] #This gets the latitude
         print(index)
-        long=row['LONGITUDE']
+        long=row['LONGITUDE'] #This gets the longitude
         date=pd.to_datetime(row['DATE']).month
-        hourly_temp=row['HourlyDryBulbTemperature']
-        hourly_speed=row['HourlyWindSpeed']
+        hourly_temp=row['HourlyDryBulbTemperature'] #This gets the hourly temperature
+        hourly_speed=row['HourlyWindSpeed'] #This gets the hourly wind speed
         tuple_data.append((date,float(lat),float(long),float(hourly_temp),float(hourly_speed))) #Convert everthing into float and put in list
     return tuple_data
 def csv_to_dffilter(path_folder): # This function converts the csv file into the required tuple format
-    with beam.Pipeline(runner='DirectRunner') as pipeline:
+    with beam.Pipeline(runner='DirectRunner') as pipeline: #This creates the pipeline in direct runner mode in beam
         csv_files = [os.path.join(path_folder,file) for file in os.listdir(path_folder) if file.endswith('.csv')]
         result = (
             pipeline 
@@ -68,7 +68,7 @@ def csv_to_dffilter(path_folder): # This function converts the csv file into the
             | beam.Map(monthly_average)
             | beam.io.WriteToText('/opt/airflow/tuple_data.txt')
         )
-text_address='/opt/airflow/tuple_data.txt-00000-of-00001'
+text_address='/opt/airflow/tuple_data.txt-00000-of-00001' #This is the address of the text file stored by beam
 #Now let us create the function that will compute the monthly averages for the same latitude and longitude 
 def monthly_average(data_list):
     data_df = pd.DataFrame(data_list, columns=['Month', 'Latitude', 'Longitude', 'Temperature', 'WindSpeed'])
@@ -104,13 +104,13 @@ def hmap(link):
         'AvgTemperature': temperature,
         'AvgWSpeed': wspeed
     })
-    gdf = gpd.GeoDataFrame(data_df, geometry=gpd.points_from_xy(data_df.Longitude, data_df.Latitude))
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    gdf = gpd.GeoDataFrame(data_df, geometry=gpd.points_from_xy(data_df.Longitude, data_df.Latitude)) #Create a geodataframe
+    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres')) #This gets the world map
     unique_months = gdf['Month'].unique()
     temp_min = gdf['AvgTemperature'].min()
     temp_max = gdf['AvgTemperature'].max()# This is done to fix scale in vmin and vmax
     wind_speed_min = gdf['AvgWSpeed'].min()
-    wind_speed_max = gdf['AvgWSpeed'].max()
+    wind_speed_max = gdf['AvgWSpeed'].max() 
     for month in unique_months:
     # Filter the GeoDataFrame for the current month
         gdf_month = gdf[gdf['Month'] == month]
@@ -124,12 +124,12 @@ def hmap(link):
                    legend_kwds={'label': "AvgTemperature", 'orientation': "horizontal"})
         ax.set_title(f'Temperature for Month {month}')
         plt.axis('scaled')
-        plt.savefig(f'/opt/airflow/temperature/plot_month_{month}_temperature.png')
+        plt.savefig(f'/opt/airflow/temperature/plot_month_{month}_temperature.png') #Save the figure for each month
 
     # Plot Wind Speed for the current month
         ax = world.plot( color='lightgrey', edgecolor='black',markersize=1, vmin=wind_speed_min, vmax=wind_speed_max)
         gdf_month.plot(column='AvgWSpeed',vmin=wind_speed_min, vmax=wind_speed_max, ax=ax, cmap='viridis', legend=True, 
-                   legend_kwds={'label': "AvgWSpeed", 'orientation': "horizontal"})
+                   legend_kwds={'label': "AvgWSpeed", 'orientation': "horizontal"}) #Plot the wind speed
         ax.set_title(f'Wind Speed for Month {month}')
         plt.axis('scaled')
         plt.savefig(f'/opt/airflow/wind/Wind_Speed_for_Month_{month}.png')
@@ -174,4 +174,4 @@ delete_csv=BashOperator(
     dag=dag,
     trigger_rule='all_success'
 )
-check_available>>unzip_task>>tupleavg_gen>>hmap_gen>>gif_task_1>>gif_task_2>>delete_csv #Final DAG created
+check_available>>unzip_task>>tupleavg_gen>>hmap_gen>>gif_task_1>>gif_task_2>>delete_csv #Final DAG created here 
